@@ -1,0 +1,19 @@
+apply plugin: 'application'
+
+application {
+    mainClass = 'com.prismpath.lwjgl3.Lwjgl3Launcher'
+}
+
+dependencies {
+    implementation project(':core')
+    implementation "com.badlogicgames.gdx:gdx-backend-lwjgl3:$gdxVersion"
+    implementation "com.badlogicgames.gdx:gdx-platform:$gdxVersion:natives-desktop"
+}
+
+run {
+    workingDir = rootProject.file('.')
+    ignoreExitValue = true
+    if (org.gradle.internal.os.OperatingSystem.current().isMacOsX()) {
+        jvmArgs += '-XstartOnFirstThread'
+    }
+}

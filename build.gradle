@@ -1,0 +1,28 @@
+allprojects {
+    apply plugin: 'eclipse'
+    apply plugin: 'idea'
+}
+
+subprojects {
+    apply plugin: 'java-library'
+
+    version = '0.1.0'
+    ext {
+        appName = 'PrismPath'
+        gdxVersion = '1.13.1'
+        junitVersion = '5.10.2'
+    }
+
+    java {
+        sourceCompatibility = JavaVersion.VERSION_11
+        targetCompatibility = JavaVersion.VERSION_11
+    }
+
+    tasks.withType(JavaCompile).configureEach {
+        options.encoding = 'UTF-8'
+    }
+
+    repositories {
+        mavenCentral()
+    }
+}
