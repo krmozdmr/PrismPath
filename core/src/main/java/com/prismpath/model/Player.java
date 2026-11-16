@@ -18,6 +18,13 @@ public final class Player implements Solid {
     private static final float MAX_STEP = RADIUS / 2f;
     private static final int RESOLVE_PASSES = 4;
 
+    /** Abstand zwischen Figur und Objekt, in dem man es noch greifen kann. */
+    public static final float REACH = 24f;
+    /** Ein Objekt muss höchstens so viele Grad neben der Blickrichtung liegen. */
+    public static final float GRAB_ANGLE = 70f;
+    /** Lücke zwischen Figur und getragenem Objekt. */
+    private static final float CARRY_GAP = 2f;
+
     public final int id;
     public final Vector2 pos;
     /** Blickrichtung in Grad, 0° zeigt nach rechts. */
@@ -60,6 +67,7 @@ public final class Player implements Solid {
             pos.add(dx / steps, dy / steps);
             resolve(solids, level);
         }
+        updateHeld();
     }
 
     private void resolve(List<Solid> solids, Level level) {
@@ -74,6 +82,97 @@ public final class Player implements Solid {
                 return;
             }
         }
+    }
+
+    /**
+     * Nimmt das nächste bewegliche Objekt vor der Figur auf.
+     *
+     * @return {@code true}, wenn jetzt ein Objekt getragen wird
+     */
+    public boolean pickUp(Level level) {
+        if (held != null) {
+            return false;
+        }
+        GameObject best = null;
+        float bestDist = Float.MAX_VALUE;
+        for (GameObject o : level.objects()) {
+            if (!o.movable || level.isHeld(o)) {
+                continue;
+            }
+            float gap = pos.dst(o.pos) - RADIUS - o.radius;
+            float toObject = MathUtils.atan2(o.pos.y - pos.y, o.pos.x - pos.x) * MathUtils.radiansToDegrees;
+            if (gap <= REACH && angleBetween(facing, toObject) <= GRAB_ANGLE && gap < bestDist) {
+                best = o;
+                bestDist = gap;
+            }
+        }
+        if (best == null) {
+            return false;
+        }
+        held = best;
+        updateHeld();
+        return true;
+    }
+
+    /**
+     * Legt das getragene Objekt vor der Figur ab. Liegt dort ein Hindernis,
+     * bleibt das Objekt in der Hand.
+     *
+     * @return {@code true}, wenn das Objekt abgelegt wurde
+     */
+    public boolean drop(Level level) {
+        if (held == null) {
+            return false;
+        }
+        updateHeld();
+        if (!fitsAt(held, level)) {
+            return false;
+        }
+        held = null;
+        return true;
+    }
+
+    /** Dreht das getragene Objekt, falls es drehbar ist. */
+    public boolean rotateHeld(float degrees) {
+        return held != null && held.rotate(degrees);
+    }
+
+    /** Setzt das getragene Objekt vor die Figur in Blickrichtung. */
+    public void updateHeld() {
+        if (held == null) {
+            return;
+        }
+        float distance = RADIUS + held.radius + CARRY_GAP;
+        held.pos.set(pos).add(new Vector2(distance, 0).setAngleDeg(facing));
+    }
+
+    private boolean fitsAt(GameObject object, Level level) {
+        Vector2 c = object.pos;
+        float r = object.radius;
+        if (c.x < r || c.y < r || c.x > level.width - r || c.y > level.height - r) {
+            return false;
+        }
+        for (Wall w : level.walls()) {
+            if (Collision.overlaps(c, r, w.rect)) {
+                return false;
+            }
+        }
+        for (GameObject o : level.objects()) {
+            if (o != object && !level.isHeld(o) && Collision.overlaps(c, r, o.pos, o.radius)) {
+                return false;
+            }
+        }
+        for (Player p : level.players()) {
+            if (Collision.overlaps(c, r, p.pos, RADIUS)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private static float angleBetween(float a, float b) {
+        float d = Math.abs(GameObject.normalize(a) - GameObject.normalize(b));
+        return d > 180f ? 360f - d : d;
     }
 
     @Override
