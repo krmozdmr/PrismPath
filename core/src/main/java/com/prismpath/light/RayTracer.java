@@ -99,9 +99,16 @@ public final class RayTracer {
 
     private void follow(Level level, Pass pass, Ray ray) {
         Hit hit = nearestHit(level, ray);
-        pass.beams.add(new BeamSegment(ray.origin, hit.point, ray.color));
         GameObject o = hit.object;
-        if (o instanceof Mirror) {
+        // In Prisma und Mixer läuft der Strahl bis zur Mitte; von dort geht es weiter.
+        Vector2 end = o instanceof Prism ? o.pos : hit.point;
+        pass.beams.add(new BeamSegment(ray.origin, end, ray.color));
+        if (o instanceof Prism) {
+            if (!canBounce(pass, ray)) {
+                return;
+            }
+            split(pass, (Prism) o, ray);
+        } else if (o instanceof Mirror) {
             if (!canBounce(pass, ray)) {
                 return;
             }
@@ -111,6 +118,19 @@ public final class RayTracer {
             if (t.accepts(ray.color)) {
                 pass.lit.add(t);
             }
+        }
+    }
+
+    /** Grundfarben gehen gerade durch, Mischfarben werden zerlegt (Frage 3). */
+    private void split(Pass pass, Prism prism, Ray ray) {
+        if (ray.color.isPrimary()) {
+            emit(pass, prism.pos.cpy(), ray.dir.cpy(), ray.color, ray.bounces + 1, prism);
+            return;
+        }
+        float base = ray.dir.angleDeg() + prism.steer();
+        for (LightColor c : ray.color.components()) {
+            Vector2 dir = new Vector2(1, 0).setAngleDeg(base + Prism.offsetFor(c));
+            emit(pass, prism.pos.cpy(), dir, c, ray.bounces + 1, prism);
         }
     }
 
@@ -150,7 +170,7 @@ public final class RayTracer {
             Vector2[] e = ((Mirror) o).endpoints();
             return RayMath.segment(ray.origin, ray.dir, e[0], e[1]);
         }
-        if (o instanceof Target) {
+        if (o instanceof Target || o instanceof Prism) {
             return RayMath.circle(ray.origin, ray.dir, o.pos, o.radius);
         }
         return RayMath.MISS;
