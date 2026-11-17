@@ -1,22 +1,22 @@
 package com.prismpath;
 
 import com.badlogic.gdx.Game;
-import com.badlogic.gdx.utils.ScreenUtils;
+import com.prismpath.level.DemoLevel;
+import com.prismpath.screen.GameScreen;
 
-/**
- * Einstiegspunkt des Spiels. Die Screens (Hauptmenü, Levelauswahl, Spiel)
- * werden in späteren Schritten im Paket {@code screen} ergänzt.
- */
+/** Einstiegspunkt des Spiels. Startet vorerst direkt das Testlevel. */
 public class PrismPathGame extends Game {
 
     @Override
     public void create() {
-        // Der erste Screen wird gesetzt, sobald das Paket screen existiert.
+        setScreen(new GameScreen(DemoLevel::create));
     }
 
     @Override
-    public void render() {
-        ScreenUtils.clear(0.05f, 0.06f, 0.09f, 1f);
-        super.render();
+    public void dispose() {
+        if (getScreen() != null) {
+            getScreen().dispose();
+        }
+        super.dispose();
     }
 }
