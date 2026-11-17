@@ -4,10 +4,11 @@ import com.badlogic.gdx.Game;
 import com.badlogic.gdx.Screen;
 import com.prismpath.level.LevelCatalog;
 import com.prismpath.screen.GameScreen;
+import com.prismpath.screen.LevelSelectScreen;
 import com.prismpath.screen.MenuScreen;
 import com.prismpath.ui.MenuMusic;
 
-/** Einstiegspunkt des Spiels; wechselt zwischen Menü und Spiel. */
+/** Einstiegspunkt des Spiels; wechselt zwischen Menü, Levelauswahl und Spiel. */
 public class PrismPathGame extends Game {
 
     private LevelCatalog catalog;
@@ -32,9 +33,8 @@ public class PrismPathGame extends Game {
         change(new MenuScreen(this), true);
     }
 
-    /** Vorerst startet „Spielen“ das erste Level; die Levelauswahl folgt. */
     public void showLevelSelect() {
-        startLevel(0);
+        change(new LevelSelectScreen(this), true);
     }
 
     public void startLevel(int index) {
