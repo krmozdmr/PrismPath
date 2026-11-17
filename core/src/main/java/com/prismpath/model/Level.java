@@ -10,6 +10,7 @@ import java.util.List;
  */
 public final class Level {
 
+    public final String name;
     public final float width;
     public final float height;
 
@@ -18,9 +19,14 @@ public final class Level {
     private final List<Player> players = new ArrayList<>();
 
     public Level(float width, float height) {
+        this("", width, height);
+    }
+
+    public Level(String name, float width, float height) {
         if (width <= 0 || height <= 0) {
             throw new IllegalArgumentException("Levelgröße muss positiv sein");
         }
+        this.name = name == null ? "" : name;
         this.width = width;
         this.height = height;
     }
