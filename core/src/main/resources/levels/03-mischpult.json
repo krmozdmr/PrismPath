@@ -1,0 +1,18 @@
+{
+  "name": "Mischpult",
+  "width": 1280,
+  "height": 720,
+  "border": 20,
+  "objects": [
+    { "type": "source", "x": 60, "y": 200, "angle": 0, "color": "RED" },
+    { "type": "source", "x": 60, "y": 520, "angle": 0, "color": "GREEN" },
+    { "type": "mixer", "x": 900, "y": 620, "angle": 90 },
+    { "type": "mirror", "x": 300, "y": 640, "angle": 0 },
+    { "type": "mirror", "x": 300, "y": 80, "angle": 0 },
+    { "type": "target", "x": 1200, "y": 360, "color": "YELLOW" }
+  ],
+  "players": [
+    { "x": 160, "y": 330 },
+    { "x": 160, "y": 400 }
+  ]
+}
