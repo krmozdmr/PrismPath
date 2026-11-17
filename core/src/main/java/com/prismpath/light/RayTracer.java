@@ -15,7 +15,7 @@ import java.util.Set;
  * Verfolgt alle Lichtstrahlen durch das Level, setzt {@link Target#lit} und
  * liefert die Strahlstücke als {@link TraceResult}.
  *
- * <p>Jedes gerade Strahlstück ist ein Strahl. Feste Grenzen verhindern
+ * <p>Lichtquellen blockieren kein Licht. Jedes gerade Strahlstück ist ein Strahl. Feste Grenzen verhindern
  * Endlosschleifen (Frage 6): {@value #MAX_BOUNCES} Umlenkungen pro Strahl
  * und {@value #MAX_RAYS} Strahlen insgesamt.
  */
@@ -101,12 +101,25 @@ public final class RayTracer {
         Hit hit = nearestHit(level, ray);
         pass.beams.add(new BeamSegment(ray.origin, hit.point, ray.color));
         GameObject o = hit.object;
-        if (o instanceof Target) {
+        if (o instanceof Mirror) {
+            if (!canBounce(pass, ray)) {
+                return;
+            }
+            emit(pass, hit.point, ((Mirror) o).reflect(ray.dir), ray.color, ray.bounces + 1, o);
+        } else if (o instanceof Target) {
             Target t = (Target) o;
             if (t.accepts(ray.color)) {
                 pass.lit.add(t);
             }
         }
+    }
+
+    private static boolean canBounce(Pass pass, Ray ray) {
+        if (ray.bounces >= MAX_BOUNCES) {
+            pass.truncated = true;
+            return false;
+        }
+        return true;
     }
 
     private Hit nearestHit(Level level, Ray ray) {
@@ -133,7 +146,11 @@ public final class RayTracer {
     }
 
     private static float distanceTo(GameObject o, Ray ray) {
-        if (o instanceof Target || o instanceof LightSource) {
+        if (o instanceof Mirror) {
+            Vector2[] e = ((Mirror) o).endpoints();
+            return RayMath.segment(ray.origin, ray.dir, e[0], e[1]);
+        }
+        if (o instanceof Target) {
             return RayMath.circle(ray.origin, ray.dir, o.pos, o.radius);
         }
         return RayMath.MISS;
