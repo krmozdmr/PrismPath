@@ -7,22 +7,48 @@ import com.prismpath.model.Wall;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
  * Verfolgt alle Lichtstrahlen durch das Level, setzt {@link Target#lit} und
  * liefert die Strahlstücke als {@link TraceResult}.
  *
- * <p>Lichtquellen blockieren kein Licht. Jedes gerade Strahlstück ist ein Strahl. Feste Grenzen verhindern
- * Endlosschleifen (Frage 6): {@value #MAX_BOUNCES} Umlenkungen pro Strahl
- * und {@value #MAX_RAYS} Strahlen insgesamt.
+ * <p>Lichtquellen blockieren kein Licht. Jedes gerade Strahlstück ist ein Strahl.
+ * Feste Grenzen verhindern Endlosschleifen (Frage 6): {@value #MAX_BOUNCES}
+ * Umlenkungen pro Strahl, {@value #MAX_RAYS} Strahlen insgesamt und
+ * {@value #MAX_MIXER_PASSES} Durchläufe für Mixer.
+ *
+ * <p>Mixer senden aus, was bei ihnen ankommt; was ankommt, hängt aber auch
+ * von den Mixern ab. Deshalb rechnet der RayTracer so lange neu, bis sich die
+ * Ausgänge aller Mixer nicht mehr ändern.
  */
 public final class RayTracer {
 
     public static final int MAX_BOUNCES = 64;
     public static final int MAX_RAYS = 512;
+    public static final int MAX_MIXER_PASSES = 10;
+
+    private final int maxBounces;
+    private final int maxRays;
+    private final int maxMixerPasses;
+
+    public RayTracer() {
+        this(MAX_BOUNCES, MAX_RAYS, MAX_MIXER_PASSES);
+    }
+
+    /** Mit eigenen Grenzen, nur für Tests. */
+    RayTracer(int maxBounces, int maxRays, int maxMixerPasses) {
+        if (maxBounces < 0 || maxRays < 1 || maxMixerPasses < 1) {
+            throw new IllegalArgumentException("Ungültige Grenzen");
+        }
+        this.maxBounces = maxBounces;
+        this.maxRays = maxRays;
+        this.maxMixerPasses = maxMixerPasses;
+    }
 
     /** Ein Strahl, der noch verfolgt werden muss. */
     private static final class Ray {
@@ -58,21 +84,37 @@ public final class RayTracer {
         final List<BeamSegment> beams = new ArrayList<>();
         final Set<Target> lit = new HashSet<>();
         final Deque<Ray> queue = new ArrayDeque<>();
+        /** Bitmaske der Farben, die bei jedem Mixer ankommen. */
+        final Map<Mixer, Integer> mixerInput = new HashMap<>();
         int rays;
         boolean truncated;
     }
 
     public TraceResult trace(Level level) {
-        Pass pass = runPass(level);
+        Map<Mixer, LightColor> outputs = new HashMap<>();
+        Pass pass = null;
+        boolean stable = false;
+        for (int i = 0; i < maxMixerPasses && !stable; i++) {
+            pass = runPass(level, outputs);
+            Map<Mixer, LightColor> next = new HashMap<>();
+            for (Map.Entry<Mixer, Integer> e : pass.mixerInput.entrySet()) {
+                LightColor out = e.getKey().output(e.getValue());
+                if (out != null) {
+                    next.put(e.getKey(), out);
+                }
+            }
+            stable = next.equals(outputs);
+            outputs = next;
+        }
         for (GameObject o : level.objects()) {
             if (o instanceof Target) {
                 ((Target) o).lit = pass.lit.contains(o);
             }
         }
-        return new TraceResult(pass.beams, pass.truncated, false);
+        return new TraceResult(pass.beams, pass.truncated, !stable);
     }
 
-    private Pass runPass(Level level) {
+    private Pass runPass(Level level, Map<Mixer, LightColor> mixerOutputs) {
         Pass pass = new Pass();
         for (GameObject o : level.objects()) {
             if (o instanceof LightSource) {
@@ -82,6 +124,10 @@ public final class RayTracer {
                 emit(pass, origin, dir, s.color, 0, s);
             }
         }
+        for (Map.Entry<Mixer, LightColor> e : mixerOutputs.entrySet()) {
+            Mixer m = e.getKey();
+            emit(pass, m.pos.cpy(), m.direction(), e.getValue(), 0, m);
+        }
         while (!pass.queue.isEmpty()) {
             follow(level, pass, pass.queue.poll());
         }
@@ -89,7 +135,7 @@ public final class RayTracer {
     }
 
     private void emit(Pass pass, Vector2 origin, Vector2 dir, LightColor color, int bounces, GameObject from) {
-        if (pass.rays >= MAX_RAYS) {
+        if (pass.rays >= maxRays) {
             pass.truncated = true;
             return;
         }
@@ -101,13 +147,15 @@ public final class RayTracer {
         Hit hit = nearestHit(level, ray);
         GameObject o = hit.object;
         // In Prisma und Mixer läuft der Strahl bis zur Mitte; von dort geht es weiter.
-        Vector2 end = o instanceof Prism ? o.pos : hit.point;
+        Vector2 end = o instanceof Prism || o instanceof Mixer ? o.pos : hit.point;
         pass.beams.add(new BeamSegment(ray.origin, end, ray.color));
         if (o instanceof Prism) {
             if (!canBounce(pass, ray)) {
                 return;
             }
             split(pass, (Prism) o, ray);
+        } else if (o instanceof Mixer) {
+            pass.mixerInput.merge((Mixer) o, ray.color.mask, (a, b) -> a | b);
         } else if (o instanceof Mirror) {
             if (!canBounce(pass, ray)) {
                 return;
@@ -134,8 +182,8 @@ public final class RayTracer {
         }
     }
 
-    private static boolean canBounce(Pass pass, Ray ray) {
-        if (ray.bounces >= MAX_BOUNCES) {
+    private boolean canBounce(Pass pass, Ray ray) {
+        if (ray.bounces >= maxBounces) {
             pass.truncated = true;
             return false;
         }
@@ -170,7 +218,7 @@ public final class RayTracer {
             Vector2[] e = ((Mirror) o).endpoints();
             return RayMath.segment(ray.origin, ray.dir, e[0], e[1]);
         }
-        if (o instanceof Target || o instanceof Prism) {
+        if (o instanceof Target || o instanceof Prism || o instanceof Mixer) {
             return RayMath.circle(ray.origin, ray.dir, o.pos, o.radius);
         }
         return RayMath.MISS;
