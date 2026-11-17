@@ -4,8 +4,9 @@ Ein kooperatives 2-Spieler-Rätselspiel in Draufsicht, entwickelt mit Java und l
 Die Spieler bewegen sich frei durch das Level, tragen und drehen Spiegel und Prismen und
 lenken das Licht so, dass jedes Ziel in genau seiner Farbe leuchtet.
 
-> **Stand:** erste Sprints. Grundlage ist der spielbare Prototyp. Teleporter (FA05) und
-> Online-Spiel (FA06) sind entworfen, aber noch nicht umgesetzt.
+> **Stand:** FA01 bis FA04 sind als spielbarer Entwurf umgesetzt: Hauptmenü,
+> Levelauswahl, drei Level aus JSON-Dateien und lokales Spiel zu zweit. Teleporter
+> (FA05) und Online-Spiel (FA06) sind entworfen, aber noch nicht umgesetzt.
 
 ## Architektur
 
@@ -32,8 +33,14 @@ Alle Pakete liegen unter `com.prismpath`.
 | Drehen              | Q / E     | Ö / Ç       |
 | Fein drehen         | + Shift   | + Shift     |
 
-**R** startet das Level neu, **Enter** führt nach dem Lösen zum nächsten Level.
-**Esc** beendet vorerst das Spiel; später öffnet es das Menü.
+**R** startet das Level neu, **Enter** führt nach dem Lösen zum nächsten Level,
+**Esc** öffnet das Menü.
+
+Das Spiel startet im Hauptmenü; **Spielen** öffnet die Levelauswahl. Die Menümusik
+lässt sich im Hauptmenü ein- und ausschalten; die Wahl bleibt gespeichert.
+
+Grafik ist bewusst noch ein Entwurf: einfache Formen, Standardschrift, einfarbige
+Knöpfe. Das Pixel-Art-Design folgt in einem späteren Schritt.
 
 ## Voraussetzungen
 
