@@ -32,7 +32,8 @@ Alle Pakete liegen unter `com.prismpath`.
 | Drehen              | Q / E     | Ö / Ç       |
 | Fein drehen         | + Shift   | + Shift     |
 
-**R** startet das Level neu, **Esc** öffnet das Menü.
+**R** startet das Level neu, **Enter** führt nach dem Lösen zum nächsten Level.
+**Esc** beendet vorerst das Spiel; später öffnet es das Menü.
 
 ## Voraussetzungen
 
@@ -60,6 +61,45 @@ PrismPath/
 ├── lwjgl3/    Desktop-Starter
 └── gradle/    Gradle-Wrapper
 ```
+
+## Neues Level anlegen
+
+Level liegen als JSON-Dateien in `core/src/main/resources/levels/`. Für ein neues Level
+braucht es keine Code-Änderung (NFA05):
+
+1. Datei anlegen, z. B. `04-mein-level.json`.
+2. Dateinamen in `levels/index.json` an der gewünschten Stelle eintragen.
+3. `./gradlew build` prüft, dass alle Level laden.
+
+Koordinaten in Einheiten, Ursprung unten links, Winkel in Grad (0° = rechts, gegen den
+Uhrzeigersinn positiv).
+
+```json
+{
+  "name": "Mein Level",
+  "width": 1280,
+  "height": 720,
+  "border": 20,
+  "walls": [ { "x": 760, "y": 260, "w": 20, "h": 200 } ],
+  "objects": [
+    { "type": "source", "x": 60,   "y": 360, "angle": 0, "color": "WHITE" },
+    { "type": "prism",  "x": 320,  "y": 360 },
+    { "type": "mirror", "x": 500,  "y": 200, "angle": 45 },
+    { "type": "mixer",  "x": 700,  "y": 500, "angle": 0 },
+    { "type": "target", "x": 1200, "y": 360, "color": "GREEN" }
+  ],
+  "players": [ { "x": 160, "y": 220 }, { "x": 160, "y": 500, "facing": 0 } ]
+}
+```
+
+| Feld | Bedeutung |
+|---|---|
+| `border` | optional: Rahmen aus Wänden mit dieser Dicke |
+| `walls` | Rechtecke mit linker unterer Ecke `x`, `y`, Breite `w`, Höhe `h` |
+| `type` | `source`, `mirror`, `prism`, `mixer` oder `target` |
+| `color` | bei `source` und `target`: `RED`, `GREEN`, `BLUE`, `YELLOW`, `CYAN`, `MAGENTA`, `WHITE` |
+| `movable`, `rotatable` | optional; Standard: Lichtquellen fest, Spiegel/Prismen/Mixer beweglich und drehbar, Ziele fest |
+| `players` | eine oder zwei Figuren, `facing` optional |
 
 ## Mitarbeit
 
