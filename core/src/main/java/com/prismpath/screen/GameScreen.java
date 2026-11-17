@@ -10,6 +10,7 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.utils.ScreenUtils;
 import com.badlogic.gdx.utils.viewport.FitViewport;
+import com.prismpath.PrismPathGame;
 import com.prismpath.input.GdxKeyInput;
 import com.prismpath.input.KeyInput;
 import com.prismpath.input.PlayerController;
@@ -22,13 +23,14 @@ import com.prismpath.render.LevelRenderer;
 /**
  * Spielschleife eines Levels (Abb. 2): Eingabe, Strahlen, Levelende, Zeichnen.
  * R startet das Level neu, Enter führt nach dem Lösen zum nächsten Level,
- * Esc beendet vorerst das Spiel (das Menü folgt).
+ * Esc öffnet das Menü (Frage 8).
  */
 public final class GameScreen extends ScreenAdapter {
 
     /** Größter Zeitschritt, damit nach Rucklern niemand durch Wände springt. */
     private static final float MAX_DT = 1f / 20f;
 
+    private final PrismPathGame game;
     private final LevelCatalog catalog;
     private final KeyInput input = new GdxKeyInput();
     private final PlayerController controller = new PlayerController();
@@ -46,8 +48,9 @@ public final class GameScreen extends ScreenAdapter {
     private TraceResult trace = TraceResult.EMPTY;
     private boolean solved;
 
-    public GameScreen(LevelCatalog catalog, int levelIndex) {
-        this.catalog = catalog;
+    public GameScreen(PrismPathGame game, int levelIndex) {
+        this.game = game;
+        this.catalog = game.catalog();
         this.viewport = new FitViewport(1280, 720, camera);
         load(levelIndex);
     }
@@ -67,8 +70,7 @@ public final class GameScreen extends ScreenAdapter {
     @Override
     public void render(float delta) {
         if (Gdx.input.isKeyJustPressed(Keys.ESCAPE)) {
-            Gdx.app.exit();
-            return;
+            Gdx.app.postRunnable(game::showMenu);
         }
         if (Gdx.input.isKeyJustPressed(Keys.R)) {
             load(levelIndex);
@@ -96,7 +98,7 @@ public final class GameScreen extends ScreenAdapter {
         font.draw(batch, "Level " + (levelIndex + 1) + "/" + catalog.size() + ": " + level.name,
             30, level.height - 30);
         font.setColor(Color.LIGHT_GRAY);
-        font.draw(batch, "P1: WASD  Leertaste  Q/E (+Shift)     P2: Pfeile  M  Ö/Ç (+Shift)     R: neu   Esc: Ende",
+        font.draw(batch, "P1: WASD  Leertaste  Q/E (+Shift)     P2: Pfeile  M  Ö/Ç (+Shift)     R: neu   Esc: Menü",
             30, 45);
         if (solved) {
             font.setColor(Color.WHITE);
