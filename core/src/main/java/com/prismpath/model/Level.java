@@ -7,9 +7,6 @@ import java.util.List;
 /**
  * Ein Level mit Wänden, Objekten und Figuren. Die Spielfläche reicht von
  * (0, 0) bis ({@link #width}, {@link #height}).
- *
- * <p>Das Levelende ({@code isSolved()}) kommt mit den Zielen im Paket
- * {@code light} hinzu.
  */
 public final class Level {
 
@@ -53,6 +50,23 @@ public final class Level {
 
     public List<Player> players() {
         return Collections.unmodifiableList(players);
+    }
+
+    /**
+     * {@code true}, wenn das Level mindestens ein Ziel hat und alle Ziele
+     * leuchten (Frage 5).
+     */
+    public boolean isSolved() {
+        boolean anyGoal = false;
+        for (GameObject o : objects) {
+            if (o instanceof Goal) {
+                anyGoal = true;
+                if (!((Goal) o).isLit()) {
+                    return false;
+                }
+            }
+        }
+        return anyGoal;
     }
 
     /** {@code true}, wenn eine Figur dieses Objekt trägt. */
