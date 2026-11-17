@@ -13,22 +13,23 @@ import com.badlogic.gdx.utils.viewport.FitViewport;
 import com.prismpath.input.GdxKeyInput;
 import com.prismpath.input.KeyInput;
 import com.prismpath.input.PlayerController;
+import com.prismpath.level.LevelCatalog;
 import com.prismpath.light.RayTracer;
 import com.prismpath.light.TraceResult;
 import com.prismpath.model.Level;
 import com.prismpath.render.LevelRenderer;
-import java.util.function.Supplier;
 
 /**
  * Spielschleife eines Levels (Abb. 2): Eingabe, Strahlen, Levelende, Zeichnen.
- * R startet das Level neu, Esc beendet vorerst das Spiel (das Menü folgt).
+ * R startet das Level neu, Enter führt nach dem Lösen zum nächsten Level,
+ * Esc beendet vorerst das Spiel (das Menü folgt).
  */
 public final class GameScreen extends ScreenAdapter {
 
     /** Größter Zeitschritt, damit nach Rucklern niemand durch Wände springt. */
     private static final float MAX_DT = 1f / 20f;
 
-    private final Supplier<Level> levelFactory;
+    private final LevelCatalog catalog;
     private final KeyInput input = new GdxKeyInput();
     private final PlayerController controller = new PlayerController();
     private final RayTracer tracer = new RayTracer();
@@ -40,14 +41,27 @@ public final class GameScreen extends ScreenAdapter {
     private final LevelRenderer renderer = new LevelRenderer(shapes);
     private final FitViewport viewport;
 
+    private int levelIndex;
     private Level level;
     private TraceResult trace = TraceResult.EMPTY;
     private boolean solved;
 
-    public GameScreen(Supplier<Level> levelFactory) {
-        this.levelFactory = levelFactory;
-        this.level = levelFactory.get();
-        this.viewport = new FitViewport(level.width, level.height, camera);
+    public GameScreen(LevelCatalog catalog, int levelIndex) {
+        this.catalog = catalog;
+        this.viewport = new FitViewport(1280, 720, camera);
+        load(levelIndex);
+    }
+
+    private void load(int index) {
+        levelIndex = index;
+        level = catalog.create(index);
+        solved = false;
+        viewport.setWorldSize(level.width, level.height);
+        viewport.update(Gdx.graphics.getWidth(), Gdx.graphics.getHeight(), true);
+    }
+
+    private boolean hasNextLevel() {
+        return levelIndex + 1 < catalog.size();
     }
 
     @Override
@@ -57,7 +71,10 @@ public final class GameScreen extends ScreenAdapter {
             return;
         }
         if (Gdx.input.isKeyJustPressed(Keys.R)) {
-            level = levelFactory.get();
+            load(levelIndex);
+        }
+        if (solved && hasNextLevel() && Gdx.input.isKeyJustPressed(Keys.ENTER)) {
+            load(levelIndex + 1);
         }
         float dt = Math.min(delta, MAX_DT);
 
@@ -75,6 +92,9 @@ public final class GameScreen extends ScreenAdapter {
     private void drawHud() {
         batch.setProjectionMatrix(camera.combined);
         batch.begin();
+        font.setColor(Color.WHITE);
+        font.draw(batch, "Level " + (levelIndex + 1) + "/" + catalog.size() + ": " + level.name,
+            30, level.height - 30);
         font.setColor(Color.LIGHT_GRAY);
         font.draw(batch, "P1: WASD  Leertaste  Q/E (+Shift)     P2: Pfeile  M  Ö/Ç (+Shift)     R: neu   Esc: Ende",
             30, 45);
@@ -83,6 +103,8 @@ public final class GameScreen extends ScreenAdapter {
             font.getData().setScale(2f);
             font.draw(batch, "Level gelöst!", level.width / 2f - 90, level.height - 50);
             font.getData().setScale(1f);
+            String next = hasNextLevel() ? "Enter: nächstes Level" : "Alle Level geschafft!";
+            font.draw(batch, next, level.width / 2f - 70, level.height - 90);
         }
         batch.end();
     }

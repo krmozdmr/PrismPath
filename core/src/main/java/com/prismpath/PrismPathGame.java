@@ -9,8 +9,7 @@ public class PrismPathGame extends Game {
 
     @Override
     public void create() {
-        LevelCatalog catalog = LevelCatalog.load();
-        setScreen(new GameScreen(() -> catalog.create(0)));
+        setScreen(new GameScreen(LevelCatalog.load(), 0));
     }
 
     @Override
