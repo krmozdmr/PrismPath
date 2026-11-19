@@ -26,6 +26,7 @@ public final class LevelRenderer {
 
     private static final Color FLOOR = Color.valueOf("141a24");
     private static final Color WALL = Color.valueOf("3a4558");
+    private static final Color DOOR = Color.valueOf("c8a060");
     private static final Color GLASS = Color.valueOf("9fd8ff");
     private static final Color METAL = Color.valueOf("c9d3e0");
     private static final Color PLAYER_1 = Color.valueOf("4f8cff");
@@ -49,6 +50,9 @@ public final class LevelRenderer {
             shapes.setColor(WALL);
             shapes.rect(w.rect.x, w.rect.y, w.rect.width, w.rect.height);
         }
+        if (level.door() != null && !level.isDoorOpen()) {
+            drawDoor(level.door());
+        }
         for (BeamSegment b : trace.beams) {
             shapes.setColor(LightPalette.of(b.color));
             shapes.rectLine(b.start, b.end, BEAM_WIDTH);
@@ -62,10 +66,19 @@ public final class LevelRenderer {
         shapes.end();
 
         shapes.begin(ShapeType.Line);
+        if (level.isDoorOpen()) {
+            drawDoor(level.door());
+        }
         for (Player p : level.players()) {
             drawFocus(level, p);
         }
         shapes.end();
+    }
+
+    /** Geschlossen als volles Rechteck (Filled), offen nur als Rahmen (Line). */
+    private void drawDoor(Wall door) {
+        shapes.setColor(DOOR);
+        shapes.rect(door.rect.x, door.rect.y, door.rect.width, door.rect.height);
     }
 
     private void drawObject(GameObject o) {
