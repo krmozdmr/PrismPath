@@ -3,6 +3,7 @@ package com.prismpath.model;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector2;
 import java.util.List;
+import java.util.function.Predicate;
 
 /**
  * Spielfigur in Draufsicht. Die Figur ist für die Kollision ein Kreis und
@@ -93,19 +94,7 @@ public final class Player implements Solid {
         if (held != null) {
             return false;
         }
-        GameObject best = null;
-        float bestDist = Float.MAX_VALUE;
-        for (GameObject o : level.objects()) {
-            if (!o.movable || level.isHeld(o)) {
-                continue;
-            }
-            float gap = pos.dst(o.pos) - RADIUS - o.radius;
-            float toObject = MathUtils.atan2(o.pos.y - pos.y, o.pos.x - pos.x) * MathUtils.radiansToDegrees;
-            if (gap <= REACH && angleBetween(facing, toObject) <= GRAB_ANGLE && gap < bestDist) {
-                best = o;
-                bestDist = gap;
-            }
-        }
+        GameObject best = nearestInReach(level, o -> o.movable);
         if (best == null) {
             return false;
         }
@@ -135,6 +124,49 @@ public final class Player implements Solid {
     /** Dreht das getragene Objekt, falls es drehbar ist. */
     public boolean rotateHeld(float degrees) {
         return held != null && held.rotate(degrees);
+    }
+
+    /**
+     * Dreht das getragene Objekt. Trägt die Figur nichts, dreht sie das nächste
+     * drehbare Objekt vor sich, nach derselben Regel wie {@link #pickUp}.
+     *
+     * @return {@code true}, wenn sich ein Winkel geändert hat
+     */
+    public boolean rotate(float degrees, Level level) {
+        if (held != null) {
+            return rotateHeld(degrees);
+        }
+        GameObject target = nearestInReach(level, o -> o.rotatable);
+        return target != null && target.rotate(degrees);
+    }
+
+    /**
+     * Objekt, mit dem die Figur gerade etwas tun kann: das getragene oder das
+     * nächste vor ihr, das sich aufnehmen oder drehen lässt, sonst {@code null}.
+     */
+    public GameObject focus(Level level) {
+        if (held != null) {
+            return held;
+        }
+        return nearestInReach(level, o -> o.movable || o.rotatable);
+    }
+
+    /** Nächstes freies Objekt vor der Figur in Reichweite, das {@code filter} erfüllt. */
+    private GameObject nearestInReach(Level level, Predicate<GameObject> filter) {
+        GameObject best = null;
+        float bestDist = Float.MAX_VALUE;
+        for (GameObject o : level.objects()) {
+            if (!filter.test(o) || level.isHeld(o)) {
+                continue;
+            }
+            float gap = pos.dst(o.pos) - RADIUS - o.radius;
+            float toObject = MathUtils.atan2(o.pos.y - pos.y, o.pos.x - pos.x) * MathUtils.radiansToDegrees;
+            if (gap <= REACH && angleBetween(facing, toObject) <= GRAB_ANGLE && gap < bestDist) {
+                best = o;
+                bestDist = gap;
+            }
+        }
+        return best;
     }
 
     /** Setzt das getragene Objekt vor die Figur in Blickrichtung. */
