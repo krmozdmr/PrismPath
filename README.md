@@ -33,6 +33,10 @@ Alle Pakete liegen unter `com.prismpath`.
 | Drehen              | Q / E     | Ö / Ç       |
 | Fein drehen         | + Shift   | + Shift     |
 
+Wer nichts trägt, dreht mit den Drehtasten das Objekt direkt vor sich. Ein dünner
+Ring in der Farbe der Figur zeigt, welches Objekt gemeint ist: durchgehend beim
+getragenen Objekt, blinkend bei einem Objekt in Reichweite.
+
 **R** startet das Level neu, **Enter** führt nach dem Lösen zum nächsten Level,
 **Esc** öffnet das Menü.
 
