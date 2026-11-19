@@ -37,8 +37,9 @@ Wer nichts trägt, dreht mit den Drehtasten das Objekt direkt vor sich. Ein dün
 Ring in der Farbe der Figur zeigt, welches Objekt gemeint ist: durchgehend beim
 getragenen Objekt, blinkend bei einem Objekt in Reichweite.
 
-**R** startet das Level neu, **Enter** führt nach dem Lösen zum nächsten Level,
-**Esc** öffnet das Menü.
+Ist das Level gelöst, öffnet sich die Tür im Rahmen; erlischt ein Ziel, geht sie
+wieder zu. Stehen beide Figuren in der offenen Tür, beginnt das nächste Level.
+**R** startet das Level neu, **Esc** öffnet das Menü.
 
 Das Spiel startet im Hauptmenü; **Spielen** öffnet die Levelauswahl. Die Menümusik
 lässt sich im Hauptmenü ein- und ausschalten; die Wahl bleibt gespeichert.
@@ -91,6 +92,7 @@ Uhrzeigersinn positiv).
   "width": 1280,
   "height": 720,
   "border": 20,
+  "door": { "side": "right", "at": 360 },
   "walls": [ { "x": 760, "y": 260, "w": 20, "h": 200 } ],
   "objects": [
     { "type": "source", "x": 60,   "y": 360, "angle": 0, "color": "WHITE" },
@@ -106,6 +108,7 @@ Uhrzeigersinn positiv).
 | Feld | Bedeutung |
 |---|---|
 | `border` | optional: Rahmen aus Wänden mit dieser Dicke |
+| `door` | Tür im Rahmen (braucht `border`): `side` ist `left`, `right`, `bottom` oder `top`, `at` die Mitte der 120 Einheiten breiten Öffnung; ohne Tür endet das Level nicht |
 | `walls` | Rechtecke mit linker unterer Ecke `x`, `y`, Breite `w`, Höhe `h` |
 | `type` | `source`, `mirror`, `prism`, `mixer` oder `target` |
 | `color` | bei `source` und `target`: `RED`, `GREEN`, `BLUE`, `YELLOW`, `CYAN`, `MAGENTA`, `WHITE` |
