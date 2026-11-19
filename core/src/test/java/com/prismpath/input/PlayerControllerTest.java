@@ -5,6 +5,8 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import com.prismpath.light.LightColor;
+import com.prismpath.light.LightSource;
 import com.prismpath.light.Mirror;
 import com.prismpath.model.Level;
 import com.prismpath.model.Player;
@@ -95,5 +97,22 @@ class PlayerControllerTest {
         controller.update(level, keys, 0.1f);
         assertEquals(PlayerController.MIN_SPEED * 0.1f, m.angle - before, DELTA);
         assertTrue(p1.isHolding());
+    }
+
+    @Test
+    void drehtObjektVorDerFigurAuchOhneTragen() {
+        Mirror m = level.addObject(new Mirror(140, 300, 0, true, true));
+        keys.press(1, Action.ROTATE_LEFT).press(1, Action.FINE);
+        controller.update(level, keys, 1f);
+        assertEquals(PlayerController.FINE_SPEED, m.angle, DELTA);
+        assertFalse(p1.isHolding());
+    }
+
+    @Test
+    void lichtquelleDrehtSichNicht() {
+        LightSource s = level.addObject(new LightSource(140, 300, 0, LightColor.RED, false, false));
+        keys.press(1, Action.ROTATE_LEFT);
+        controller.update(level, keys, 0.5f);
+        assertEquals(0, s.angle, DELTA);
     }
 }
