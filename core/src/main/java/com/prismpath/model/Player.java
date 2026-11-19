@@ -189,6 +189,9 @@ public final class Player implements Solid {
                 return false;
             }
         }
+        if (level.door() != null && Collision.overlaps(c, r, level.door().rect)) {
+            return false; // Türöffnung freihalten
+        }
         for (GameObject o : level.objects()) {
             if (o != object && !level.isHeld(o) && Collision.overlaps(c, r, o.pos, o.radius)) {
                 return false;
