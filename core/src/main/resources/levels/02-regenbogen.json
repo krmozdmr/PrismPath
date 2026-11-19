@@ -3,6 +3,7 @@
   "width": 1280,
   "height": 720,
   "border": 20,
+  "door": { "side": "bottom", "at": 1000 },
   "walls": [
     { "x": 760, "y": 260, "w": 20, "h": 200 }
   ],
