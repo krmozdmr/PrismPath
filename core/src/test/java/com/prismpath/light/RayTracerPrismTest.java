@@ -108,4 +108,13 @@ class RayTracerPrismTest {
         assertEquals(0, angleOf(out.get(1)), DELTA);
         assertEquals(20, angleOf(out.get(2)), DELTA);
     }
+
+    @Test
+    void strahlNebenDemDreieckTrifftDasPrismaNicht() {
+        level.addObject(new LightSource(285, 550, 270, LightColor.WHITE, false, false));
+        level.addObject(new Prism(300, 300, 0, true, true));
+        TraceResult r = tracer.trace(level);
+        assertEquals(1, r.beams.size(), "x = 285 liegt im Umkreis, aber links vom Dreieck");
+        assertEquals(0, r.beams.get(0).end.y, DELTA);
+    }
 }

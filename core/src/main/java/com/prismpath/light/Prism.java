@@ -11,7 +11,8 @@ import com.prismpath.model.GameObject;
  * enthaltene Grundfarbe verlässt das Prisma mit {@link #offsetFor} gegenüber
  * der Grundrichtung. Die Grundrichtung ist die Einfallsrichtung, gedreht um
  * {@link #steer()}; so lenkt das Drehen des Prismas die Strahlen wie im
- * Prototyp. Das Prisma ist für Strahlen und Kollision ein Kreis.
+ * Prototyp. Strahlen treffen nur das Dreieck ({@link #vertices()}); für die
+ * Kollision mit Figuren ist das Prisma ein Kreis.
  */
 public final class Prism extends GameObject {
 
