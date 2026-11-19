@@ -114,15 +114,9 @@ public final class LevelRenderer {
     }
 
     private void drawPrism(Prism p) {
-        float r = p.radius;
-        float x1 = p.pos.x + r * MathUtils.cosDeg(p.angle);
-        float y1 = p.pos.y + r * MathUtils.sinDeg(p.angle);
-        float x2 = p.pos.x + r * MathUtils.cosDeg(p.angle + 120);
-        float y2 = p.pos.y + r * MathUtils.sinDeg(p.angle + 120);
-        float x3 = p.pos.x + r * MathUtils.cosDeg(p.angle + 240);
-        float y3 = p.pos.y + r * MathUtils.sinDeg(p.angle + 240);
+        Vector2[] v = p.vertices();
         shapes.setColor(GLASS);
-        shapes.triangle(x1, y1, x2, y2, x3, y3);
+        shapes.triangle(v[0].x, v[0].y, v[1].x, v[1].y, v[2].x, v[2].y);
     }
 
     private void drawPlayer(Player p) {

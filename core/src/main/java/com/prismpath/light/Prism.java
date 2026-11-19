@@ -1,6 +1,7 @@
 package com.prismpath.light;
 
 import com.badlogic.gdx.math.MathUtils;
+import com.badlogic.gdx.math.Vector2;
 import com.prismpath.model.GameObject;
 
 /**
@@ -20,6 +21,15 @@ public final class Prism extends GameObject {
 
     public Prism(float x, float y, float angle, boolean movable, boolean rotatable) {
         super(x, y, angle, RADIUS, movable, rotatable);
+    }
+
+    /** Die drei Ecken des Dreiecks; eine Ecke zeigt in Blickrichtung. */
+    public Vector2[] vertices() {
+        Vector2[] v = new Vector2[3];
+        for (int i = 0; i < 3; i++) {
+            v[i] = new Vector2(RADIUS, 0).setAngleDeg(angle + 120f * i).add(pos);
+        }
+        return v;
     }
 
     /**
