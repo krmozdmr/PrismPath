@@ -5,6 +5,7 @@ import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer.ShapeType;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector2;
+import com.badlogic.gdx.utils.TimeUtils;
 import com.prismpath.light.BeamSegment;
 import com.prismpath.light.LightSource;
 import com.prismpath.light.Mirror;
@@ -30,6 +31,8 @@ public final class LevelRenderer {
     private static final Color PLAYER_1 = Color.valueOf("4f8cff");
     private static final Color PLAYER_2 = Color.valueOf("49d17d");
     private static final float BEAM_WIDTH = 3f;
+    /** So stark wird der Fokusring beim Blinken höchstens abgedunkelt. */
+    private static final float FOCUS_DIM = 0.6f;
 
     private final ShapeRenderer shapes;
     private final Color tmp = new Color();
@@ -55,6 +58,12 @@ public final class LevelRenderer {
         }
         for (Player p : level.players()) {
             drawPlayer(p);
+        }
+        shapes.end();
+
+        shapes.begin(ShapeType.Line);
+        for (Player p : level.players()) {
+            drawFocus(level, p);
         }
         shapes.end();
     }
@@ -104,7 +113,7 @@ public final class LevelRenderer {
     }
 
     private void drawPlayer(Player p) {
-        Color c = p.id == 1 ? PLAYER_1 : PLAYER_2;
+        Color c = colorOf(p);
         shapes.setColor(c);
         shapes.circle(p.pos.x, p.pos.y, Player.RADIUS);
         pointer(p.pos, p.facing, Player.RADIUS + 5f, Color.WHITE);
@@ -112,6 +121,29 @@ public final class LevelRenderer {
             shapes.setColor(tmp.set(c).mul(1, 1, 1, 0.6f));
             shapes.rectLine(p.pos, p.held.pos, 2f);
         }
+    }
+
+    /**
+     * Dünner Ring in der Farbe der Figur um das Objekt, mit dem sie gerade etwas
+     * tun kann: durchgehend beim getragenen Objekt, leicht blinkend in Reichweite.
+     */
+    private void drawFocus(Level level, Player p) {
+        GameObject o = p.focus(level);
+        if (o == null) {
+            return;
+        }
+        tmp.set(colorOf(p));
+        if (o != p.held) {
+            float phase = TimeUtils.millis() % 1000 / 1000f; // eine Sekunde pro Blinken
+            tmp.lerp(FLOOR, FOCUS_DIM * (0.5f + 0.5f * MathUtils.sinDeg(phase * 360f)));
+        }
+        shapes.setColor(tmp);
+        // Etwas Abstand je Figur, damit sich zwei Ringe um dasselbe Objekt nicht überdecken.
+        shapes.circle(o.pos.x, o.pos.y, o.radius + 3f + 3f * p.id);
+    }
+
+    private static Color colorOf(Player p) {
+        return p.id == 1 ? PLAYER_1 : PLAYER_2;
     }
 
     private void pointer(Vector2 from, float angle, float length, Color color) {
