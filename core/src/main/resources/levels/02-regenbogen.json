@@ -1,0 +1,23 @@
+{
+  "name": "Regenbogen",
+  "width": 1280,
+  "height": 720,
+  "border": 20,
+  "walls": [
+    { "x": 760, "y": 260, "w": 20, "h": 200 }
+  ],
+  "objects": [
+    { "type": "source", "x": 60, "y": 360, "angle": 0, "color": "WHITE" },
+    { "type": "prism", "x": 320, "y": 360, "angle": 0 },
+    { "type": "mirror", "x": 480, "y": 140, "angle": 0 },
+    { "type": "mirror", "x": 560, "y": 600, "angle": 90 },
+    { "type": "mirror", "x": 1000, "y": 230, "angle": 45 },
+    { "type": "target", "x": 1100, "y": 644, "color": "BLUE" },
+    { "type": "target", "x": 1200, "y": 560, "color": "GREEN" },
+    { "type": "target", "x": 200, "y": 100, "color": "RED" }
+  ],
+  "players": [
+    { "x": 160, "y": 220 },
+    { "x": 160, "y": 500 }
+  ]
+}

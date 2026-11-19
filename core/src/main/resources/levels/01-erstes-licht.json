@@ -1,0 +1,15 @@
+{
+  "name": "Erstes Licht",
+  "width": 1280,
+  "height": 720,
+  "border": 20,
+  "objects": [
+    { "type": "source", "x": 80, "y": 600, "angle": 0, "color": "RED" },
+    { "type": "mirror", "x": 400, "y": 300, "angle": 0 },
+    { "type": "target", "x": 1000, "y": 150, "color": "RED" }
+  ],
+  "players": [
+    { "x": 200, "y": 300 },
+    { "x": 200, "y": 420 }
+  ]
+}
