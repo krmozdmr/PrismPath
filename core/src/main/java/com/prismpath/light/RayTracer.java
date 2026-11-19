@@ -1,5 +1,6 @@
 package com.prismpath.light;
 
+import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Vector2;
 import com.prismpath.model.GameObject;
 import com.prismpath.model.Level;
@@ -146,14 +147,15 @@ public final class RayTracer {
     private void follow(Level level, Pass pass, Ray ray) {
         Hit hit = nearestHit(level, ray);
         GameObject o = hit.object;
-        // In Prisma und Mixer läuft der Strahl bis zur Mitte; von dort geht es weiter.
-        Vector2 end = o instanceof Prism || o instanceof Mixer ? o.pos : hit.point;
+        // Prisma und Mixer zählen jeden Treffer, als ginge er durch die Mitte. Der
+        // Strahl knickt aber nicht zur Mitte ab, sondern läuft auf seiner Linie weiter.
+        Vector2 end = o instanceof Prism || o instanceof Mixer ? closestToCenter(ray, o) : hit.point;
         pass.beams.add(new BeamSegment(ray.origin, end, ray.color));
         if (o instanceof Prism) {
             if (!canBounce(pass, ray)) {
                 return;
             }
-            split(pass, (Prism) o, ray);
+            split(pass, (Prism) o, ray, end);
         } else if (o instanceof Mixer) {
             pass.mixerInput.merge((Mixer) o, ray.color.mask, (a, b) -> a | b);
         } else if (o instanceof Mirror) {
@@ -169,17 +171,44 @@ public final class RayTracer {
         }
     }
 
-    /** Grundfarben gehen gerade durch, Mischfarben werden zerlegt (Frage 3). */
-    private void split(Pass pass, Prism prism, Ray ray) {
+    /**
+     * Grundfarben gehen gerade durch, Mischfarben werden zerlegt (Frage 3).
+     * Die neuen Strahlen starten bei {@code at}, die Winkel sind dieselben wie
+     * bei einem Treffer in der Mitte.
+     */
+    private void split(Pass pass, Prism prism, Ray ray, Vector2 at) {
         if (ray.color.isPrimary()) {
-            emit(pass, prism.pos.cpy(), ray.dir.cpy(), ray.color, ray.bounces + 1, prism);
+            emit(pass, at.cpy(), ray.dir.cpy(), ray.color, ray.bounces + 1, prism);
             return;
         }
         float base = ray.dir.angleDeg() + prism.steer();
         for (LightColor c : ray.color.components()) {
             Vector2 dir = new Vector2(1, 0).setAngleDeg(base + Prism.offsetFor(c));
-            emit(pass, prism.pos.cpy(), dir, c, ray.bounces + 1, prism);
+            emit(pass, at.cpy(), dir, c, ray.bounces + 1, prism);
         }
+    }
+
+    /**
+     * Punkt auf dem Strahl, der der Mitte des Objekts am nächsten liegt. Beim
+     * Prisma bleibt er zwischen Ein- und Austritt, damit der Strahl nicht aus
+     * dem Dreieck herausragt.
+     */
+    private static Vector2 closestToCenter(Ray ray, GameObject o) {
+        float t = Math.max(0, new Vector2(o.pos).sub(ray.origin).dot(ray.dir));
+        if (o instanceof Prism) {
+            Vector2[] v = ((Prism) o).vertices();
+            float in = Float.MAX_VALUE;
+            float out = 0;
+            for (int i = 0; i < 3; i++) {
+                float edge = RayMath.segment(ray.origin, ray.dir, v[i], v[(i + 1) % 3]);
+                if (edge != RayMath.MISS) {
+                    in = Math.min(in, edge);
+                    out = Math.max(out, edge);
+                }
+            }
+            t = MathUtils.clamp(t, in, out);
+        }
+        return ray.origin.cpy().mulAdd(ray.dir, t);
     }
 
     private boolean canBounce(Pass pass, Ray ray) {
@@ -218,7 +247,15 @@ public final class RayTracer {
             Vector2[] e = ((Mirror) o).endpoints();
             return RayMath.segment(ray.origin, ray.dir, e[0], e[1]);
         }
-        if (o instanceof Target || o instanceof Prism || o instanceof Mixer) {
+        if (o instanceof Prism) {
+            Vector2[] v = ((Prism) o).vertices();
+            float best = RayMath.MISS;
+            for (int i = 0; i < 3; i++) {
+                best = Math.min(best, RayMath.segment(ray.origin, ray.dir, v[i], v[(i + 1) % 3]));
+            }
+            return best;
+        }
+        if (o instanceof Target || o instanceof Mixer) {
             return RayMath.circle(ray.origin, ray.dir, o.pos, o.radius);
         }
         return RayMath.MISS;

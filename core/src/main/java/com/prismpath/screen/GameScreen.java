@@ -22,8 +22,8 @@ import com.prismpath.render.LevelRenderer;
 
 /**
  * Spielschleife eines Levels (Abb. 2): Eingabe, Strahlen, Levelende, Zeichnen.
- * R startet das Level neu, Enter führt nach dem Lösen zum nächsten Level,
- * Esc öffnet das Menü (Frage 8).
+ * Nach dem Lösen öffnet sich die Tür; stehen beide Figuren darin, beginnt das
+ * nächste Level. R startet das Level neu, Esc öffnet das Menü (Frage 8).
  */
 public final class GameScreen extends ScreenAdapter {
 
@@ -75,7 +75,7 @@ public final class GameScreen extends ScreenAdapter {
         if (Gdx.input.isKeyJustPressed(Keys.R)) {
             load(levelIndex);
         }
-        if (solved && hasNextLevel() && Gdx.input.isKeyJustPressed(Keys.ENTER)) {
+        if (level.isFinished() && hasNextLevel()) {
             load(levelIndex + 1);
         }
         float dt = Math.min(delta, MAX_DT);
@@ -105,7 +105,8 @@ public final class GameScreen extends ScreenAdapter {
             font.getData().setScale(2f);
             font.draw(batch, "Level gelöst!", level.width / 2f - 90, level.height - 50);
             font.getData().setScale(1f);
-            String next = hasNextLevel() ? "Enter: nächstes Level" : "Alle Level geschafft!";
+            String next = !hasNextLevel() && level.isFinished()
+                ? "Alle Level geschafft!" : "Beide zur Tür!";
             font.draw(batch, next, level.width / 2f - 70, level.height - 90);
         }
         batch.end();

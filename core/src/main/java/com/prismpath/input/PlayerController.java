@@ -33,7 +33,7 @@ public final class PlayerController {
             State s = states.computeIfAbsent(p.id, id -> new State());
             move(p, level, input, dt);
             grab(p, s, level, input);
-            rotate(p, s, input, dt);
+            rotate(p, s, level, input, dt);
         }
     }
 
@@ -56,7 +56,8 @@ public final class PlayerController {
         s.grabWasDown = down;
     }
 
-    private static void rotate(Player p, State s, KeyInput in, float dt) {
+    /** Dreht das getragene Objekt oder, ohne Objekt in der Hand, das nächste vor der Figur. */
+    private static void rotate(Player p, State s, Level level, KeyInput in, float dt) {
         float sign = axis(in, p.id, Action.ROTATE_LEFT, Action.ROTATE_RIGHT);
         if (sign == 0) {
             s.rotateHeld = 0;
@@ -70,7 +71,7 @@ public final class PlayerController {
             speed = MathUtils.lerp(MIN_SPEED, MAX_SPEED, ramp);
         }
         s.rotateHeld += dt;
-        p.rotateHeld(sign * speed * dt);
+        p.rotate(sign * speed * dt, level);
     }
 
     private static float axis(KeyInput in, int id, Action positive, Action negative) {

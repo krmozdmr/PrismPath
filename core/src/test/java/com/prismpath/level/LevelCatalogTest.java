@@ -2,6 +2,7 @@ package com.prismpath.level;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -11,7 +12,7 @@ import com.prismpath.model.GameObject;
 import com.prismpath.model.Level;
 import org.junit.jupiter.api.Test;
 
-/** Prüft die mitgelieferten Level: sie laden, starten ungelöst und sind lösbar. */
+/** Prüft die mitgelieferten Level: sie laden, starten ungelöst mit geschlossener Tür und sind lösbar. */
 class LevelCatalogTest {
 
     private final LevelCatalog catalog = LevelCatalog.load();
@@ -33,6 +34,8 @@ class LevelCatalogTest {
             assertFalse(level.isSolved(), catalog.file(i) + " ist schon gelöst");
             assertFalse(r.truncated || r.unstable, catalog.file(i));
             assertEquals(2, level.players().size(), catalog.file(i));
+            assertNotNull(level.door(), catalog.file(i) + " hat keine Tür");
+            assertFalse(level.isDoorOpen(), catalog.file(i));
         }
     }
 

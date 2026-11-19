@@ -16,7 +16,11 @@ class RayTracerPrismTest {
     private final RayTracer tracer = new RayTracer();
 
     private List<BeamSegment> leaving(TraceResult r, Prism prism) {
-        return r.beams.stream().filter(b -> b.start.epsilonEquals(prism.pos, 1e-3f))
+        return startingAt(r, prism.pos);
+    }
+
+    private List<BeamSegment> startingAt(TraceResult r, Vector2 point) {
+        return r.beams.stream().filter(b -> b.start.epsilonEquals(point, 1e-3f))
             .collect(Collectors.toList());
     }
 
@@ -89,5 +93,28 @@ class RayTracerPrismTest {
         List<BeamSegment> out = leaving(tracer.trace(level), second);
         assertEquals(1, out.size());
         assertEquals(LightColor.GREEN, out.get(0).color);
+    }
+
+    @Test
+    void strahlNebenDerMitteKnicktNichtZurMitteAb() {
+        level.addObject(new LightSource(100, 310, 0, LightColor.WHITE, false, false));
+        level.addObject(new Prism(300, 300, 0, true, true));
+        TraceResult r = tracer.trace(level);
+        Vector2 inside = new Vector2(300, 310);
+        assertTrue(r.beams.get(0).end.epsilonEquals(inside, 1e-3f));
+        List<BeamSegment> out = startingAt(r, inside);
+        assertEquals(3, out.size(), "Winkel wie bei einem Treffer in der Mitte");
+        assertEquals(340, angleOf(out.get(0)), DELTA);
+        assertEquals(0, angleOf(out.get(1)), DELTA);
+        assertEquals(20, angleOf(out.get(2)), DELTA);
+    }
+
+    @Test
+    void strahlNebenDemDreieckTrifftDasPrismaNicht() {
+        level.addObject(new LightSource(285, 550, 270, LightColor.WHITE, false, false));
+        level.addObject(new Prism(300, 300, 0, true, true));
+        TraceResult r = tracer.trace(level);
+        assertEquals(1, r.beams.size(), "x = 285 liegt im Umkreis, aber links vom Dreieck");
+        assertEquals(0, r.beams.get(0).end.y, DELTA);
     }
 }

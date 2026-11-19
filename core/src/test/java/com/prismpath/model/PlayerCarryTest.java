@@ -101,4 +101,29 @@ class PlayerCarryTest {
         assertFalse(p1.rotateHeld(30));
         assertEquals(0, box.angle, DELTA);
     }
+
+    @Test
+    void objektVorDerFigurDrehtSichOhneTragen() {
+        GameObject box = box(140, 300, false, true);
+        assertTrue(p1.rotate(30, level));
+        assertEquals(30, box.angle, DELTA);
+        assertFalse(p1.isHolding());
+    }
+
+    @Test
+    void festesObjektDrehtSichNicht() {
+        GameObject box = box(140, 300, false, false);
+        assertFalse(p1.rotate(30, level));
+        assertEquals(0, box.angle, DELTA);
+    }
+
+    @Test
+    void fokusIstGetragenesOderNaechstesObjekt() {
+        assertNull(p1.focus(level));
+        GameObject box = box(140, 300, true, true);
+        assertSame(box, p1.focus(level));
+        p1.pickUp(level);
+        p1.move(0, 1, 0.5f, level);
+        assertSame(box, p1.focus(level));
+    }
 }

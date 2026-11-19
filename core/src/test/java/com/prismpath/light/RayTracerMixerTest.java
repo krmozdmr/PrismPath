@@ -43,6 +43,17 @@ class RayTracerMixerTest {
     }
 
     @Test
+    void strahlNebenDerMitteKommtTrotzdemAn() {
+        level.addObject(new LightSource(100, 290, 0, LightColor.BLUE, false, false));
+        Mixer m = mixer(400, 300, 90);
+        TraceResult r = tracer.trace(level);
+        assertEquals(2, r.beams.size());
+        assertTrue(r.beams.get(0).end.epsilonEquals(400, 290, 1e-3f), "kein Knick zur Mitte");
+        assertEquals(m.pos, r.beams.get(1).start);
+        assertEquals(LightColor.BLUE, r.beams.get(1).color);
+    }
+
+    @Test
     void mixerOhneLichtBleibtDunkel() {
         mixer(400, 300, 0);
         TraceResult r = tracer.trace(level);

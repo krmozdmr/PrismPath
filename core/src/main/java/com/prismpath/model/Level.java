@@ -17,6 +17,7 @@ public final class Level {
     private final List<Wall> walls = new ArrayList<>();
     private final List<GameObject> objects = new ArrayList<>();
     private final List<Player> players = new ArrayList<>();
+    private Wall door;
 
     public Level(float width, float height) {
         this("", width, height);
@@ -44,6 +45,40 @@ public final class Level {
     public Player addPlayer(Player player) {
         players.add(player);
         return player;
+    }
+
+    /**
+     * Setzt die Tür im Außenrahmen. Sie ist ein Wandstück, das nur offen ist,
+     * solange das Level gelöst ist.
+     */
+    public Wall setDoor(Wall door) {
+        this.door = door;
+        return door;
+    }
+
+    /** Die Tür oder {@code null}, wenn das Level keine hat. */
+    public Wall door() {
+        return door;
+    }
+
+    public boolean isDoorOpen() {
+        return door != null && isSolved();
+    }
+
+    /**
+     * {@code true}, wenn die Tür offen ist und alle Figuren in der Türöffnung
+     * stehen. Steht nur eine Figur dort, ist das Level noch nicht zu Ende.
+     */
+    public boolean isFinished() {
+        if (!isDoorOpen() || players.isEmpty()) {
+            return false;
+        }
+        for (Player p : players) {
+            if (!door.rect.contains(p.pos)) {
+                return false;
+            }
+        }
+        return true;
     }
 
     public List<Wall> walls() {
@@ -85,9 +120,12 @@ public final class Level {
         return false;
     }
 
-    /** Wände und alle Objekte, die gerade nicht getragen werden. */
+    /** Wände, die geschlossene Tür und alle Objekte, die gerade nicht getragen werden. */
     public List<Solid> solidObjects() {
         List<Solid> result = new ArrayList<>(walls);
+        if (door != null && !isDoorOpen()) {
+            result.add(door);
+        }
         for (GameObject o : objects) {
             if (!isHeld(o)) {
                 result.add(o);

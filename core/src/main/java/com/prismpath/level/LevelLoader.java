@@ -1,5 +1,6 @@
 package com.prismpath.level;
 
+import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.utils.JsonReader;
 import com.badlogic.gdx.utils.JsonValue;
 import com.badlogic.gdx.utils.SerializationException;
@@ -20,9 +21,13 @@ import java.util.Locale;
  * Das Format ist in der README beschrieben.
  *
  * <p>Fehlende Angaben haben Standardwerte: Winkel 0; Lichtquellen sind fest,
- * Spiegel, Prismen und Mixer sind beweglich und drehbar.
+ * Spiegel, Prismen und Mixer sind beweglich und drehbar. Eine Tür ist eine
+ * Lücke im Rahmen ({@code border}).
  */
 public final class LevelLoader {
+
+    /** Breite der Türöffnung; zwei Figuren passen nebeneinander hinein. */
+    public static final float DOOR_WIDTH = 120f;
 
     private LevelLoader() {
     }
@@ -42,11 +47,15 @@ public final class LevelLoader {
         Level level = new Level(root.getString("name", ""), width, height);
 
         float border = root.getFloat("border", 0);
+        Rectangle door = door(root, width, height, border);
         if (border > 0) {
-            level.addWall(new Wall(0, 0, width, border));
-            level.addWall(new Wall(0, height - border, width, border));
-            level.addWall(new Wall(0, 0, border, height));
-            level.addWall(new Wall(width - border, 0, border, height));
+            frame(level, new Rectangle(0, 0, width, border), door);
+            frame(level, new Rectangle(0, height - border, width, border), door);
+            frame(level, new Rectangle(0, 0, border, height), door);
+            frame(level, new Rectangle(width - border, 0, border, height), door);
+        }
+        if (door != null) {
+            level.setDoor(new Wall(door.x, door.y, door.width, door.height));
         }
         int i = 0;
         for (JsonValue w : list(root, "walls")) {
@@ -68,6 +77,59 @@ public final class LevelLoader {
             throw new LevelFormatException("Ein Level braucht 1 oder 2 Figuren unter \"players\"");
         }
         return level;
+    }
+
+    /**
+     * Türöffnung im Rahmen oder {@code null}. {@code side} ist die Seite,
+     * {@code at} die Mitte der Öffnung entlang dieser Seite.
+     */
+    private static Rectangle door(JsonValue root, float width, float height, float border) {
+        JsonValue d = root.get("door");
+        if (d == null) {
+            return null;
+        }
+        if (border <= 0) {
+            throw new LevelFormatException("door: eine Tür braucht einen Rahmen (\"border\")");
+        }
+        String side = text(d, "side", "door");
+        float start = number(d, "at", "door") - DOOR_WIDTH / 2;
+        Rectangle r;
+        switch (side) {
+            case "left":
+                r = new Rectangle(0, start, border, DOOR_WIDTH);
+                break;
+            case "right":
+                r = new Rectangle(width - border, start, border, DOOR_WIDTH);
+                break;
+            case "bottom":
+                r = new Rectangle(start, 0, DOOR_WIDTH, border);
+                break;
+            case "top":
+                r = new Rectangle(start, height - border, DOOR_WIDTH, border);
+                break;
+            default:
+                throw new LevelFormatException("door: unbekannte Seite \"" + side + "\"");
+        }
+        float length = side.equals("left") || side.equals("right") ? height : width;
+        if (start < border || start + DOOR_WIDTH > length - border) {
+            throw new LevelFormatException("door: Öffnung reicht in eine Ecke");
+        }
+        return r;
+    }
+
+    /** Legt eine Seite des Rahmens an und lässt dabei die Türöffnung frei. */
+    private static void frame(Level level, Rectangle side, Rectangle door) {
+        if (door == null || !side.overlaps(door)) {
+            level.addWall(new Wall(side.x, side.y, side.width, side.height));
+        } else if (side.width > side.height) {
+            level.addWall(new Wall(side.x, side.y, door.x - side.x, side.height));
+            level.addWall(new Wall(door.x + door.width, side.y,
+                side.x + side.width - door.x - door.width, side.height));
+        } else {
+            level.addWall(new Wall(side.x, side.y, side.width, door.y - side.y));
+            level.addWall(new Wall(side.x, door.y + door.height,
+                side.width, side.y + side.height - door.y - door.height));
+        }
     }
 
     private static GameObject object(JsonValue o, String where) {

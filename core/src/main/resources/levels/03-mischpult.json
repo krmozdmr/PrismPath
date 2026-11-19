@@ -3,6 +3,7 @@
   "width": 1280,
   "height": 720,
   "border": 20,
+  "door": { "side": "top", "at": 640 },
   "objects": [
     { "type": "source", "x": 60, "y": 200, "angle": 0, "color": "RED" },
     { "type": "source", "x": 60, "y": 520, "angle": 0, "color": "GREEN" },

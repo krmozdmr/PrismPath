@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import com.badlogic.gdx.math.Rectangle;
 import com.prismpath.light.LightColor;
 import com.prismpath.light.LightSource;
 import com.prismpath.light.Mirror;
@@ -13,6 +14,7 @@ import com.prismpath.light.Mixer;
 import com.prismpath.light.Prism;
 import com.prismpath.light.Target;
 import com.prismpath.model.Level;
+import com.prismpath.model.Wall;
 import org.junit.jupiter.api.Test;
 
 class LevelLoaderTest {
@@ -98,5 +100,24 @@ class LevelLoaderTest {
     void ohneFigurenUngueltig() {
         assertThrows(LevelFormatException.class,
             () -> LevelLoader.parse("{ \"width\": 800, \"height\": 600 }"));
+    }
+
+    @Test
+    void tuerLaesstEineLueckeImRahmen() {
+        Level level = LevelLoader.parse("{ \"width\": 800, \"height\": 600, \"border\": 20,"
+            + " \"door\": {\"side\": \"right\", \"at\": 300}, \"players\": [ {\"x\": 100, \"y\": 100} ] }");
+        Rectangle door = level.door().rect;
+        assertEquals(new Rectangle(780, 300 - LevelLoader.DOOR_WIDTH / 2, 20, LevelLoader.DOOR_WIDTH), door);
+        assertEquals(5, level.walls().size(), "rechte Seite in zwei Stücken");
+        for (Wall w : level.walls()) {
+            assertFalse(w.rect.overlaps(door));
+        }
+    }
+
+    @Test
+    void tuerOhneRahmenUngueltig() {
+        assertThrows(LevelFormatException.class, () -> LevelLoader.parse(
+            "{ \"width\": 800, \"height\": 600, \"door\": {\"side\": \"top\", \"at\": 400},"
+                + " \"players\": [ {\"x\": 1, \"y\": 1} ] }"));
     }
 }
